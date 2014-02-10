@@ -25,7 +25,8 @@ DEVNULL = open(os.devnull, 'w')
 def get_workspaces():
     # UnicodeDecodeError: https://github.com/ziberna/i3-py/issues/9 
     try:
-        return i3.get_workspaces()
+        workspaces = i3.get_workspaces()
+        return workspaces if not workspaces is None else []
     except UnicodeDecodeError as e:
         logging.error('error in i3.get_workspaces(): %s' % str(e))
         time.sleep(1)
@@ -61,18 +62,18 @@ def get_edge_or_corner(x_max, y_max):
         return 'bottom'
     return None
 
-def workspace_nth_next(edges, workspace_curr, workspaces_len):
+def workspace_nth_next(edges, workspace_curr, workspaces):
     workspace_curr_nth = workspace_curr['num']
     if edges in ('left', 'top_left', 'bottom_left'):
-        next = workspace_curr_nth - 1
-        if next < 1:
-            return workspaces_len
-        return next
+        next = [ws['num'] for ws in workspaces if ws['num'] < workspace_curr_nth]
+        if not next:
+            return workspaces[-1]['num']
+        return next[-1]
     elif edges in ('right', 'top_right', 'bottom_right'):
-        next = workspace_curr_nth + 1
-        if next > workspaces_len:
-            return 1
-        return next
+        next = [ws['num'] for ws in workspaces if ws['num'] > workspace_curr_nth]
+        if not next:
+            return workspaces[0]['num']
+        return next[0]
     return -1
 
 def new_mouse_location(edges, x_max, y_max):
@@ -87,8 +88,8 @@ def cmd_behave_screen_edge(delay, quiesce, verbose):
     delay = delay / 1000 if delay > 0 else delay
     quiesce = quiesce / 1000 if quiesce > 0 else delay
     while True:
-        workspaces = get_workspaces()
-        workspaces_len = len(workspaces) if not workspaces is None else 1
+        workspaces = sorted(get_workspaces(), key=lambda ws: ws['num'])
+        workspaces_len = len(workspaces)
         logging.debug('workspaces length: %i' % workspaces_len)
 
         # Just only workspace, do nothing
@@ -96,18 +97,18 @@ def cmd_behave_screen_edge(delay, quiesce, verbose):
             time.sleep(delay + quiesce)
             continue
 
-        workspace_root = sorted(workspaces, key=lambda ws: ws['num'])[0]
+        workspace_root = workspaces[0]
         workspace_curr = [ws for ws in workspaces if ws['focused'] == True][0]
         x_max = workspace_root['rect']['width'] - 1
         y_max = workspace_root['rect']['height'] - 1
 
         edges = get_edge_or_corner(x_max, y_max)
         if not edges is None:
-            logging.info('[OK] edges: %s, workspace_curr: %s, workspaces_len: %s' % \
+            logging.debug('edges: %s, workspace_curr: %s, workspaces_len: %s' % \
                 (edges, workspace_curr, workspaces_len))
 
-            next = workspace_nth_next(edges, workspace_curr, workspaces_len)
-            logging.debug('exec workspace %i' % next)
+            next = workspace_nth_next(edges, workspace_curr, workspaces)
+            logging.info('exec workspace %i' % next)
             if next != -1:
                 i3.command('workspace', str(next))
 
