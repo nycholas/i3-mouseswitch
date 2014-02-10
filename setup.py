@@ -37,7 +37,7 @@ setup(
     license='New BSD License',
     author='Nycholas de Oliveira e Oliveira',
     author_email='nycholas@gmail.com',
-    description='',
+    description='A python utility to mouse move switch between workspace for i3wm (i3 improved tiling wm)',
     long_description=open('README.rst').read(),
     platforms='any',
     scripts=['mouseswitch.py'],

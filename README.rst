@@ -27,6 +27,7 @@ or
 Adding in their settings i3 (~/.i3/config).
 
 ::
+
     # mouse behave screen edge
     exec --no-startup-id mouseswitch.py
     
