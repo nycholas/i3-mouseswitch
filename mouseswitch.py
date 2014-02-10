@@ -22,6 +22,15 @@ __version__ = '0.0.1'
 
 DEVNULL = open(os.devnull, 'w')
 
+def get_workspaces():
+    # UnicodeDecodeError: https://github.com/ziberna/i3-py/issues/9 
+    try:
+        return i3.get_workspaces()
+    except UnicodeDecodeError as e:
+        logging.error('error in i3.get_workspaces(): %s' % str(e))
+        time.sleep(1)
+    return []
+
 def get_mouse_location():
     mouse_location = subprocess.check_output(['xdotool', 'getmouselocation'], 
         stdin=DEVNULL, stderr=subprocess.STDOUT)
@@ -78,12 +87,7 @@ def cmd_behave_screen_edge(delay, quiesce, verbose):
     delay = delay / 1000 if delay > 0 else delay
     quiesce = quiesce / 1000 if quiesce > 0 else delay
     while True:
-        try: # https://github.com/ziberna/i3-py/issues/9 
-            workspaces = i3.get_workspaces()
-        except UnicodeDecodeError as e:
-            logging.error('error in i3.get_workspaces() command: %s' % str(e))
-            time.sleep(delay * 2)
-            continue
+        workspaces = get_workspaces()
         workspaces_len = len(workspaces) if not workspaces is None else 1
         logging.debug('workspaces length: %i' % workspaces_len)
 
