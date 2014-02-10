@@ -81,7 +81,7 @@ def cmd_behave_screen_edge(delay, quiesce, verbose):
         try: # https://github.com/ziberna/i3-py/issues/9 
             workspaces = i3.get_workspaces()
         except UnicodeDecodeError as e:
-            logging.error('error in i3.get_workspaces() command', e)
+            logging.error('error in i3.get_workspaces() command: %s' % str(e))
             continue
         workspaces_len = len(workspaces) if not workspaces is None else 1
         logging.debug('workspaces length: %i' % workspaces_len)
