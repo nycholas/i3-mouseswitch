@@ -26,8 +26,9 @@ def get_workspaces():
     # UnicodeDecodeError: https://github.com/ziberna/i3-py/issues/9 
     try:
         workspaces = i3.get_workspaces()
-        return workspaces if not workspaces is None else []
-    except UnicodeDecodeError as e:
+        return [ws for ws in i3.get_workspaces() if isinstance(ws, dict)] \
+            if not workspaces is None else []
+    except (UnicodeDecodeError, ValueError) as e:
         logging.error('error in i3.get_workspaces(): %s' % str(e))
         time.sleep(1)
     return []
