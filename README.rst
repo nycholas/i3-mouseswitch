@@ -29,7 +29,7 @@ Adding in their settings i3 (~/.i3/config).
 ::
 
     # mouse behave screen edge
-    exec --no-startup-id mouseswitch.py
+    exec_always --no-startup-id mouseswitch.py
     
 
 Dependecies
