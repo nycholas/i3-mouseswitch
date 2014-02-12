@@ -23,15 +23,21 @@ __version__ = '0.0.1'
 DEVNULL = open(os.devnull, 'w')
 
 def get_workspaces():
-    # UnicodeDecodeError: https://github.com/ziberna/i3-py/issues/9 
-    try:
-        workspaces = i3.get_workspaces()
-        return [ws for ws in i3.get_workspaces() if isinstance(ws, dict)] \
-            if not workspaces is None else []
-    except (UnicodeDecodeError, ValueError) as e:
-        logging.error('error in i3.get_workspaces(): %s' % str(e))
-        time.sleep(1)
+    workspaces = i3.get_workspaces()
+    if isinstance(workspaces, list):
+        return [ws for ws in workspaces if isinstance(ws, dict)]
     return []
+
+def get_workspace_curr(workspaces=None):
+    if workspaces is None:
+        workspaces = get_workspaces()
+    workspaces_focused = [ws for ws in workspaces if ws['focused'] == True]
+    if workspaces_focused:
+        return workspaces_focused[0]
+    return {}
+
+def get_workspace_rects(workspace):
+    return workspace['rect']['width'] - 1, workspace['rect']['height'] - 1
 
 def get_mouse_location():
     mouse_location = subprocess.check_output(['xdotool', 'getmouselocation'], 
@@ -77,6 +83,13 @@ def workspace_nth_next(edges, workspace_curr, workspaces):
         return next[0]
     return -1
 
+def workspace_switch_for(edges):
+    if edges in ('left', 'top_left', 'bottom_left'):
+        return 'prev'
+    elif edges in ('right', 'top_right', 'bottom_right'):
+        return 'next'
+    return None
+
 def new_mouse_location(edges, x_max, y_max):
     x, y = map(int, get_mouse_location())
     if edges in ('left', 'top_left', 'bottom_left'):
@@ -88,30 +101,30 @@ def new_mouse_location(edges, x_max, y_max):
 def cmd_behave_screen_edge(delay, quiesce, verbose):
     delay = delay / 1000 if delay > 0 else delay
     quiesce = quiesce / 1000 if quiesce > 0 else delay
+    workspace_curr = get_workspace_curr()
+    x_max, y_max = get_workspace_rects(workspace_curr)
     while True:
-        workspaces = sorted(get_workspaces(), key=lambda ws: ws['num'])
-        workspaces_len = len(workspaces)
-        logging.debug('workspaces length: %i' % workspaces_len)
-
-        # Just only workspace, do nothing
-        if workspaces_len <= 1:
-            time.sleep(delay + quiesce)
-            continue
-
-        workspace_root = workspaces[0]
-        workspace_curr = [ws for ws in workspaces if ws['focused'] == True][0]
-        x_max = workspace_root['rect']['width'] - 1
-        y_max = workspace_root['rect']['height'] - 1
-
         edges = get_edge_or_corner(x_max, y_max)
         if not edges is None:
+            workspaces = get_workspaces()
+            workspaces_len = len(workspaces)
+            logging.debug('workspaces length: %i' % workspaces_len)
+
+            # Just only workspace, do nothing
+            if workspaces_len <= 1:
+                time.sleep(delay + quiesce)
+                continue
+
+            workspace_curr = get_workspace_curr(workspaces)
+            x_max, y_max = get_workspace_rects(workspace_curr)
+
             logging.debug('edges: %s, workspace_curr: %s, workspaces_len: %s' % \
                 (edges, workspace_curr, workspaces_len))
 
-            next = workspace_nth_next(edges, workspace_curr, workspaces)
-            logging.info('exec workspace %i' % next)
-            if next != -1:
-                i3.command('workspace', str(next))
+            next_for = workspace_switch_for(edges)
+            logging.info('exec workspace %s' % next_for)
+            if next_for:
+                i3.command('workspace', next_for)
 
             x_new, y_new = new_mouse_location(edges, x_max, y_max)
             logging.debug('exec xdotool mousemove %i %i' % (x_new, y_new))
