@@ -4,6 +4,14 @@ i3-mouseswitch
 This utility for i3, inspired `FVWM-Crystal <http://fvwm-crystal.sourceforge.net>`_, you move between workspaces using the mouse.
 
 
+Prerequisites
+*************
+
+* Python 3.2, 3.3 or later (http://www.python.org)
+* i3-py 0.6.5 or later (https://github.com/ziberna/i3-py)
+* xdotool (https://www.semicomplete.com/projects/xdotool/)
+
+
 Adding i3-mouseswitch to your i3 config
 ***************************************
 
@@ -29,14 +37,7 @@ Adding in their settings i3 (~/.i3/config).
 ::
 
     # mouse behave screen edge
-    exec_always --no-startup-id mouseswitch.py
-    
-
-Dependecies
-***********
-
-* Python 3.2, 3.3 or later (http://www.python.org)
-* i3-py 0.6.5 or later (https://github.com/ziberna/i3-py)
+    exec_always --no-startup-id mouseswitch.py --delay 100
 
 
 Project Information
